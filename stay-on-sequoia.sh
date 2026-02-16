@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # stay-on-sequoia.sh
 #
 # What this does:
