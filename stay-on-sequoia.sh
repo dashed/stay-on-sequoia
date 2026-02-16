@@ -198,10 +198,12 @@ make_deferral_profile() {
   profile_uuid="$(uuidgen)"
   payload_uuid="$(uuidgen)"
 
+  local tmp_profile="${WORK_DIR}/profile.mobileconfig"
+
   log "Generating deferral profile (major upgrades only, ${DEFERRAL_DAYS} days) at:"
   log "  $out"
 
-  cat > "$out" <<EOF
+  cat > "$tmp_profile" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -254,14 +256,15 @@ make_deferral_profile() {
 </plist>
 EOF
 
-  # Validate profile format
-  if plutil -lint "$out" >/dev/null 2>&1; then
+  # Validate profile format before copying to final location
+  if plutil -lint "$tmp_profile" >/dev/null 2>&1; then
     log "  Profile validated (plutil -lint OK)."
   else
     warn "Profile did not validate with plutil. It may still work, but review the file."
   fi
 
-  # Ensure user owns the file
+  # Copy validated profile to final location
+  cp "$tmp_profile" "$out" || die "Failed to write profile to $out"
   chown "$target_user" "$out" 2>/dev/null || true
 
   # Open profile + Profiles pane for installation (best-effort)
@@ -382,6 +385,10 @@ else
 fi
 
 CONSOLE_USER="$(get_console_user)"
+
+# ---- Temp directory with cleanup trap ----
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "$WORK_DIR"' EXIT
 
 # ---- Execute ----
 case "$MODE" in
