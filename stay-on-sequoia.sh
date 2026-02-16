@@ -46,6 +46,8 @@ Modes:
   --apply          Apply changes (default)
   --status         Show current status (no changes)
   --undo           Remove only the nag-suppression key (MajorOSUserNotificationDate) for the targeted user(s)
+  --uninstall-profile
+                   Remove the deferral profile installed by this script
 
 Options:
   --manual         Keep updates enabled, but do NOT auto-install macOS updates (manual install)
@@ -62,6 +64,7 @@ Examples:
   $SCRIPT_NAME --manual --no-profile
   $SCRIPT_NAME --status
   $SCRIPT_NAME --profile-only --days 90
+  $SCRIPT_NAME --uninstall-profile
 EOF
 }
 
@@ -338,6 +341,7 @@ while [[ $# -gt 0 ]]; do
     --apply) MODE="apply" ;;
     --status) MODE="status" ;;
     --undo) MODE="undo" ;;
+    --uninstall-profile) MODE="uninstall_profile" ;;
     --manual) AUTO_INSTALL=0 ;;
     --no-profile) MAKE_PROFILE=0 ;;
     --profile-only) MODE="profile_only" ;;
@@ -408,6 +412,16 @@ case "$MODE" in
     ;;
   profile_only)
     make_deferral_profile "$CONSOLE_USER"
+    ;;
+  uninstall_profile)
+    log "Removing deferral profile (identifier: ${PROFILE_IDENTIFIER})..."
+    if /usr/bin/profiles show -type configuration 2>/dev/null | grep -q "$PROFILE_IDENTIFIER"; then
+      /usr/bin/profiles remove -identifier "$PROFILE_IDENTIFIER" 2>/dev/null || \
+        warn "Failed to remove profile. Try removing it manually in System Settings → Profiles."
+      log "Done."
+    else
+      log "Profile not found (identifier: ${PROFILE_IDENTIFIER}). Nothing to remove."
+    fi
     ;;
   apply)
     # Warn if not Sequoia (15.x), but proceed
