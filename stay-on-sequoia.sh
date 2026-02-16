@@ -115,7 +115,7 @@ ensure_root_if_needed() {
   local needs_root="$1"
   if [[ "$needs_root" -eq 1 && "${EUID:-0}" -ne 0 ]]; then
     log "Re-running with sudo (admin password may be required)..."
-    exec sudo bash "$SCRIPT_PATH" "${ORIG_ARGS[@]}"
+    exec sudo bash "$SCRIPT_PATH" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
   fi
 }
 
@@ -323,7 +323,7 @@ show_status() {
   log ""
   log "/Library/Updates contents:"
   if [[ -d /Library/Updates ]]; then
-    ls -lah /Library/Updates 2>/dev/null | sed 's/^/  /' || true
+    find /Library/Updates -maxdepth 1 -ls 2>/dev/null | sed 's/^/  /' || true
   else
     log "  <no /Library/Updates directory>"
   fi
