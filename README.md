@@ -37,6 +37,9 @@ A bash script that keeps macOS Sequoia (15.x) point updates and security respons
 
 # Undo nag suppression
 ./stay-on-sequoia.sh --undo
+
+# Remove the deferral profile
+./stay-on-sequoia.sh --uninstall-profile
 ```
 
 ## Options
@@ -46,6 +49,7 @@ A bash script that keeps macOS Sequoia (15.x) point updates and security respons
 | `--apply` | Apply changes (default) |
 | `--status` | Show current status without making changes |
 | `--undo` | Remove nag suppression for the targeted user(s) |
+| `--uninstall-profile` | Remove the deferral profile installed by this script |
 | `--manual` | Enable updates but don't auto-install them |
 | `--no-profile` | Skip generating the deferral profile |
 | `--profile-only` | Only generate and open the deferral profile |
@@ -56,9 +60,15 @@ A bash script that keeps macOS Sequoia (15.x) point updates and security respons
 
 ## Deferral Profile
 
-The generated `.mobileconfig` profile defers **major** OS upgrades only — minor updates and app updates are not affected. After generating, the script opens it in System Settings where you need to click **Install** manually (CLI profile installation is not supported on recent macOS).
+The generated `.mobileconfig` profile defers **major** OS upgrades only — minor updates and app updates are not affected. The script first attempts to install the profile via CLI (`profiles install`). If that fails (common on recent macOS for unsigned profiles), it falls back to opening the profile in System Settings for manual approval.
+
+To remove a previously installed profile, run `--uninstall-profile`.
 
 ## Notes
 
 - This does **not** prevent you from manually upgrading if you deliberately run an installer.
 - To adapt for a future macOS release, change the `UPGRADE_NAME` variable at the top of the script.
+
+## License
+
+[MIT](LICENSE)
