@@ -1,0 +1,23 @@
+name: Validate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  shellcheck:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: brew install shellcheck || true
+
+      - name: ShellCheck
+        run: shellcheck stay-on-sequoia.sh
+
+      - name: Bash syntax check
+        run: bash -n stay-on-sequoia.sh
