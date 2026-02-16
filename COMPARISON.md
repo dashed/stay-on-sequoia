@@ -39,13 +39,9 @@ A detailed comparison of [stay-on-sequoia](.) and [stop-tahoe-update](https://gi
 |---|---|
 | Minor update deferral | Also defers minor OS updates (30 days) and non-OS updates (30 days) |
 | Static auditable profile | Pre-built `.mobileconfig` template — easier to review without running the script |
-| Profile uninstall script | Removes profile by identifier via `profiles remove` |
-| CI/CD pipeline | GitHub Actions: shellcheck, plutil lint, SHA-256 checksums |
 | Community governance | CONTRIBUTING.md, CODEOWNERS, RFC process for new features |
 | Dock badge removal guide | Documentation for removing the System Settings red badge |
-| Temp file cleanup | `trap 'rm -rf "$TEMP_DIR"' EXIT` in install script |
-| CLI install attempt | Tries `profiles install` via CLI before falling back to UI `open` |
-| MIT license | Explicit permissive licensing |
+| SHA-256 checksums | CI generates checksums for installable artifacts |
 | Planned plugin system | Roadmap for installer-watcher and update-signal-monitor LaunchAgents (not yet implemented) |
 
 ---
@@ -84,13 +80,13 @@ Users who want to stay current on security patches while avoiding the major upgr
 | Aspect | stay-on-sequoia | stop-tahoe-update |
 |---|---|---|
 | **Strict mode** | `set -euo pipefail` + `IFS=$'\n\t'` | `set -euo pipefail` |
-| **Shebang** | `#!/bin/bash` | `#!/usr/bin/env bash` (more portable) |
+| **Shebang** | `#!/usr/bin/env bash` | `#!/usr/bin/env bash` |
 | **Quoting** | Thorough and consistent throughout | Adequate for the scope |
 | **Input validation** | Date format regex, integer ranges, command existence checks | File existence check only |
 | **Error handling** | Granular `\|\| warn` / `\|\| true` patterns per operation | Minimal — relies on `set -e` |
 | **Edge cases** | Bash 3.2 empty array handling, non-numeric comparisons, console user fallbacks | Not applicable (simpler scripts) |
-| **Shellcheck** | Clean | Clean (CI-enforced) |
-| **Temp file handling** | No temp files created | `mktemp -d` with `trap` cleanup |
+| **Shellcheck** | Clean (CI-enforced) | Clean (CI-enforced) |
+| **Temp file handling** | `mktemp -d` with `trap` cleanup | `mktemp -d` with `trap` cleanup |
 | **Total lines** | ~440 | ~45 across 3 scripts |
 
 ---
@@ -124,7 +120,7 @@ The `MajorOSUserNotificationDate` trick is notable because it's the only mechani
 | **Setup** | Download one script, run it | Clone repo, chmod scripts, run install |
 | **Typical invocation** | `./stay-on-sequoia.sh` (one command does everything) | `./scripts/install-profile.sh profiles/deferral-90days.mobileconfig` |
 | **Status check** | `--status` (detailed: prefs, installers, cache) | `./scripts/status.sh` (focused: profiles and prefs) |
-| **Undo** | `--undo` (nag suppression only; profile via System Settings) | `./scripts/uninstall-profile.sh` (removes profile by identifier) |
+| **Undo** | `--undo` (nag suppression) + `--uninstall-profile` (removes profile by identifier) | `./scripts/uninstall-profile.sh` (removes profile by identifier) |
 | **Customization** | Flags: `--days`, `--date`, `--manual`, `--all-users`, `--no-profile` | Edit the `.mobileconfig` XML manually |
 | **Documentation** | Concise README with options table | Extensive README with roadmap, philosophy, guides |
 
@@ -134,8 +130,8 @@ The `MajorOSUserNotificationDate` trick is notable because it's the only mechani
 
 | Aspect | stay-on-sequoia | stop-tahoe-update |
 |---|---|---|
-| **License** | None | MIT |
-| **CI/CD** | None | GitHub Actions (shellcheck, plutil, SHA-256) |
+| **License** | MIT | MIT |
+| **CI/CD** | GitHub Actions (shellcheck, syntax check) | GitHub Actions (shellcheck, plutil, SHA-256) |
 | **Community** | Single-author | 139 stars, 8 forks, discussions, contributing guidelines |
 | **Governance** | None | CODEOWNERS, RFC process, safety checklist |
 | **Roadmap** | None (purpose-built) | Multi-phase with plugin architecture |
@@ -155,11 +151,7 @@ The `MajorOSUserNotificationDate` trick is notable because it's the only mechani
 - Surgical profile that preserves minor update flow
 
 **Weaknesses:**
-- No license
-- No CI/CD
-- No profile uninstall mechanism
 - Monolithic — harder for others to audit specific parts
-- No temp file cleanup (`trap`)
 - Broader root privilege scope than necessary
 
 ### stop-tahoe-update
@@ -184,14 +176,14 @@ The `MajorOSUserNotificationDate` trick is notable because it's the only mechani
 
 ## What Each Project Could Adopt From the Other
 
-### stay-on-sequoia could adopt
+### stay-on-sequoia has adopted (done)
 
-1. **MIT license** — enable reuse and contribution
-2. **CI pipeline** — automated shellcheck + plutil validation on push
-3. **Profile uninstall mode** — `--uninstall-profile` using `profiles remove -identifier`
-4. **`trap` cleanup** — for any future temporary state
-5. **CLI profile install attempt** — try `profiles install` before falling back to `open`
-6. **`#!/usr/bin/env bash`** — marginally more portable shebang
+1. ~~**MIT license**~~ — added
+2. ~~**CI pipeline**~~ — GitHub Actions with shellcheck + syntax validation
+3. ~~**Profile uninstall mode**~~ — `--uninstall-profile` using `profiles remove -identifier`
+4. ~~**`trap` cleanup**~~ — `mktemp -d` with EXIT trap for profile generation
+5. ~~**CLI profile install attempt**~~ — tries `profiles install` before falling back to `open`
+6. ~~**`#!/usr/bin/env bash`**~~ — portable shebang
 
 ### stop-tahoe-update could adopt
 
