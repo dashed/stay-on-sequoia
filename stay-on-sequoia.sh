@@ -270,16 +270,20 @@ EOF
   cp "$tmp_profile" "$out" || die "Failed to write profile to $out"
   chown "$target_user" "$out" 2>/dev/null || true
 
-  # Open profile + Profiles pane for installation (best-effort)
-  log "Opening the profile for installation (you'll need to click Install in System Settings)..."
-  run_as_user "$target_user" open "$out" || warn "Could not open the profile automatically. Open it manually: $out"
-  sleep 2
-  run_as_user "$target_user" open "x-apple.systempreferences:com.apple.preferences.configurationprofiles" || true
+  # Try CLI install first; fall back to UI if it fails (common on recent macOS for unsigned profiles)
+  if /usr/bin/profiles install -type configuration -path "$out" 2>/dev/null; then
+    log "  Profile installed via CLI. Verify in System Settings → Profiles."
+  else
+    log "  CLI install not available, opening for manual approval..."
+    run_as_user "$target_user" open "$out" || warn "Could not open the profile automatically. Open it manually: $out"
+    sleep 2
+    run_as_user "$target_user" open "x-apple.systempreferences:com.apple.preferences.configurationprofiles" || true
 
-  log ""
-  log "Profile install reminder:"
-  log "  System Settings → (Profile Downloaded / Device Management / Profiles) → Install"
-  log "  Then return to System Settings → General → Software Update."
+    log ""
+    log "Profile install reminder:"
+    log "  System Settings → (Profile Downloaded / Device Management / Profiles) → Install"
+    log "  Then return to System Settings → General → Software Update."
+  fi
 }
 
 show_status() {
